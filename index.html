@@ -62,5 +62,29 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+<pre id="latest-output" style="background:#f0f0f0;padding:1em;"></pre>
+
+<script>
+  async function loadLatestOutput(userId) {
+    try {
+      const response = await fetch('https://<your-subdomain>.loca.lt/api/latest/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId })
+      });
+      if (!response.ok) return;
+
+      const result = await response.json();
+      document.getElementById('latest-output').textContent =
+        'Last Gemini Output:\n\n' + JSON.stringify(result, null, 2);
+    } catch (err) {
+      console.error("Load latest failed:", err);
+    }
+  }
+
+  // call on page load
+  if (userId) loadLatestOutput(userId);
+</script>
+
 </body>
 </html>
