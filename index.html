@@ -19,55 +19,48 @@
   <button id="send">Submit</button>
 
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const sendBtn = document.getElementById('send');
-    const noteFld = document.getElementById('note');
-    let userId;
+document.addEventListener('DOMContentLoaded', () => {
+  const sendBtn = document.getElementById('send');
+  const noteFld = document.getElementById('note');
 
-    // 1. Ensure we're inside the Telegram Web App
-    if (window.Telegram && window.Telegram.WebApp) {
-      // Expand the Web App to full height (optional)
-      window.Telegram.WebApp.expand();
-      // Retrieve the Telegram user ID
-      userId = window.Telegram.WebApp.initDataUnsafe.user.id;
-    } else {
-      alert(
-        '⚠️ This page must be opened from within your Telegram Bot’s Web App.\n' +
-        'Please click the “Take a Note” button in the bot chat.'
-      );
-      // Prevent further action
-      sendBtn.disabled = true;
+  // 1. Grab the WebApp object if it exists
+  const tg = window.Telegram?.WebApp;
+  if (!tg) {
+    // Not inside Telegram → disable submit and warn
+    alert(
+      '⚠️ Please open this page from your Telegram bot’s "Take a Note" button.'
+    );
+    sendBtn.disabled = true;
+    return;
+  }
+
+  // 2. Proper WebApp initialization
+  tg.expand();
+  const userId = tg.initDataUnsafe.user.id;
+
+  // 3. Attach click handler
+  sendBtn.addEventListener('click', async () => {
+    const note = noteFld.value.trim();
+    if (!note) {
+      alert('Please enter a note.');
       return;
     }
 
-    // 2. Handle Submit
-    sendBtn.addEventListener('click', async () => {
-      const note = noteFld.value.trim();
-      if (!note) {
-        alert('Please enter some text first.');
-        return;
-      }
-
-      try {
-        const response = await fetch('https://penguinote-subdomain.loca.lt/api/notes/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ note, user_id: userId }),
-        });
-
-        if (!response.ok) {
-          const err = await response.json().catch(() => ({}));
-          throw new Error(err.error || response.statusText);
-        }
-
-        const result = await response.json();
-        alert('✅ Saved successfully:\n' + JSON.stringify(result, null, 2));
-        noteFld.value = '';
-      } catch (e) {
-        alert('❌ Error saving note:\n' + e.message);
-      }
-    });
+    try {
+      const resp = await fetch('https://<your-subdomain>.loca.lt/api/notes/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note, user_id: userId }),
+      });
+      if (!resp.ok) throw new Error((await resp.json()).error || resp.statusText);
+      const data = await resp.json();
+      alert('✅ Saved:\n' + JSON.stringify(data, null, 2));
+      noteFld.value = '';
+    } catch (err) {
+      alert('❌ Error:\n' + err.message);
+    }
   });
-  </script>
+});
+</script>
 </body>
 </html>
